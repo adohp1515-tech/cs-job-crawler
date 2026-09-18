@@ -1,3 +1,6 @@
+# ============================================================================
+# [collector.py] 잡코리아 & 알바몬 CS/콜센터 실제 채용 공고 자동 수집기
+# ============================================================================
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -5,10 +8,10 @@ from datetime import datetime
 import time
 import urllib.parse
 
-# 1. 구글 Apps Script 웹 앱 URL
+# 1. 갱신된 사용자 전용 구글 시트 클라우드 DB 연동 웹 앱 URL
 GOOGLE_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwGdDo6ghU7sH2CH6jz5hCnXQPNs1JRxvMMR4raNHzofC2qtlmVBBoqCUZ-W9LiySw3/exec"
 
-# 2. 아웃소싱 / 도급사 배제 키워드 및 블랙리스트
+# 2. 아웃소싱 / 도급 / 파견사 배제 키워드 및 회사 블랙리스트
 EXCLUDE_KEYWORDS = ["파견", "도급", "아웃소싱", "채용대행", "인력공급", "인재파견", "용역", "헤드헌팅", "위탁운영", "파견직", "도급직"]
 EXCLUDE_COMPANIES = ["유베이스", "트랜스코스모스", "효성ITX", "케이티씨에스", "케이티아이에스", "삼구아이앤씨", "케이텍", "아데코", "맨파워", "제이엠씨"]
 
@@ -18,6 +21,7 @@ HEADERS = {
 }
 
 def is_outsourcing(title, company_name):
+    """아웃소싱 및 파견사 공고 필터링"""
     text = f"{title} {company_name}"
     if any(comp in company_name for comp in EXCLUDE_COMPANIES):
         return True
@@ -26,6 +30,7 @@ def is_outsourcing(title, company_name):
     return False
 
 def send_to_cloud_db(lead):
+    """구글 시트 클라우드 DB로 데이터 전송"""
     try:
         res = requests.post(GOOGLE_WEBAPP_URL, json=lead, timeout=10)
         print(f"[{lead['company']}] DB 전송 결과: {res.text}")
@@ -33,6 +38,7 @@ def send_to_cloud_db(lead):
         print(f"전송 실패 ({lead['company']}): {e}")
 
 def crawl_jobkorea(keyword="CS상담"):
+    """잡코리아 신규 공고 수집"""
     print(f">> [잡코리아] 검색 수집 중: {keyword}")
     encoded_kw = urllib.parse.quote(keyword)
     url = f"https://www.jobkorea.co.kr/Search/?stext={encoded_kw}&tabType=recruit"
@@ -80,6 +86,7 @@ def crawl_jobkorea(keyword="CS상담"):
     return results
 
 def crawl_albamon(keyword="콜센터"):
+    """알바몬 신규 공고 수집"""
     print(f">> [알바몬] 검색 수집 중: {keyword}")
     encoded_kw = urllib.parse.quote(keyword)
     url = f"https://www.albamon.com/search?keyword={encoded_kw}"
